@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Interview Conductor — Professor Griff</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;background:#0a0a0a;color:#f0ede8;min-height:100dvh;overscroll-behavior:none;}
+input,textarea,button,select{font-family:inherit;}
+#app{display:flex;flex-direction:column;height:100dvh;overflow:hidden;}
+#header{background:#111;border-bottom:0.5px solid #2a2a2a;padding:14px 16px 0;flex-shrink:0;}
+#content{flex:1;overflow-y:auto;padding:16px 16px 150px;-webkit-overflow-scrolling:touch;}
+#bottombar{position:fixed;bottom:0;left:0;right:0;z-index:200;}
+
+/* Header */
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.interview-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#555;margin-bottom:3px;}
+.interview-name{font-size:19px;font-weight:700;color:#f0ede8;}
+.stat-box{text-align:right;}
+.stat-num{font-size:22px;font-weight:700;color:#7F77DD;}
+.stat-num span{font-size:12px;color:#444;font-weight:400;}
+.stat-label{font-size:10px;color:#555;}
+.progress-bar{height:3px;background:#1e1e1e;border-radius:2px;overflow:hidden;margin-bottom:12px;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#7F77DD,#D4537E);border-radius:2px;transition:width .4s ease;}
+.tabs{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab-btn{flex:1;min-width:60px;background:none;border:none;border-bottom:2px solid transparent;padding:10px 4px;font-size:12px;font-weight:400;color:#555;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.tab-btn.active{color:#f0ede8;border-bottom-color:#7F77DD;font-weight:600;}
+
+/* Filters */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.chip{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;background:#1a1a1a;color:#777;border:0.5px solid #2e2e2e;cursor:pointer;transition:all .2s;}
+.chip.active{background:#7F77DD;color:#fff;border-color:#7F77DD;}
+
+/* Q Cards */
+.section-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px;padding-left:4px;}
+.section-gap{margin-bottom:20px;}
+.q-card{background:#161616;border:0.5px solid #2a2a2a;border-radius:12px;padding:13px 13px 13px 15px;margin-bottom:8px;cursor:pointer;transition:background .2s,border .2s;position:relative;}
+.q-card.active{background:#1c1a2e;border-color:#7F77DD;}
+.q-card.done{opacity:.35;cursor:default;}
+.q-card.wow-card{border-left-width:3px;}
+.q-row{display:flex;align-items:flex-start;gap:10px;}
+.q-num{font-size:11px;color:#444;min-width:22px;padding-top:2px;flex-shrink:0;}
+.q-text{flex:1;font-size:14px;line-height:1.65;color:#e8e5df;}
+.q-card.done .q-text{text-decoration:line-through;color:#555;}
+.check-btn{width:28px;height:28px;border-radius:50%;border:1.5px solid #333;background:transparent;color:#444;font-size:13px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.check-btn.done{background:#7F77DD;border-color:#7F77DD;color:#fff;}
+.badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.badge{font-size:10px;border-radius:4px;padding:2px 7px;font-weight:500;}
+.badge-wow{background:#1e1a3a;color:#9b94e8;border:0.5px solid #3d3580;}
+.badge-book{background:#0d2420;color:#4db897;border:0.5px solid #1a4a3a;}
+.expand-area{margin-top:12px;padding-top:12px;border-top:0.5px solid #2a2a2a;}
+.expand-tip-label{font-size:10px;color:#555;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;}
+.expand-tip{font-size:12px;color:#777;line-height:1.65;}
+.mark-btn{margin-top:12px;width:100%;padding:10px;background:#7F77DD;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;}
+.swipe-hint-text{font-size:11px;color:#333;text-align:center;margin-bottom:14px;}
+
+/* Bottom bar layers */
+#music-mini{background:#0f0f1a;border-top:0.5px solid #2a2a2a;padding:10px 16px;display:none;}
+#music-mini.visible{display:block;}
+.mini-player{display:flex;align-items:center;gap:12px;}
+.mini-track{flex:1;min-width:0;}
+.mini-track-name{font-size:12px;font-weight:600;color:#9b94e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mini-track-status{font-size:10px;color:#444;margin-top:2px;}
+.mini-controls{display:flex;align-items:center;gap:8px;}
+.mini-btn{background:none;border:none;color:#9b94e8;font-size:18px;cursor:pointer;padding:4px;line-height:1;}
+.mini-vol{width:70px;accent-color:#7F77DD;cursor:pointer;}
+
+#nav-bar{background:#111;border-top:0.5px solid #2a2a2a;padding:12px 16px max(16px,env(safe-area-inset-bottom));}
+.next-label{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;}
+.next-text{font-size:13px;color:#888;line-height:1.5;margin-bottom:9px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.jump-btn{width:100%;padding:12px;background:#7F77DD;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;}
+.complete-msg{text-align:center;padding:4px 0;}
+.complete-title{font-size:16px;color:#7F77DD;font-weight:600;}
+.complete-sub{font-size:12px;color:#555;margin-top:4px;}
+
+/* Media */
+.media-card{background:#161616;border:0.5px solid #2a2a2a;border-radius:12px;padding:14px 16px;margin-bottom:10px;}
+.media-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.media-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.media-meta{flex:1;min-width:0;}
+.media-title{font-size:14px;font-weight:500;color:#e8e5df;}
+.media-note{font-size:11px;color:#555;margin-top:2px;}
+.media-link{display:block;font-size:12px;color:#7F77DD;background:#1a1429;padding:8px 12px;border-radius:8px;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.remove-btn{background:none;border:none;color:#444;cursor:pointer;font-size:20px;padding:4px;line-height:1;flex-shrink:0;}
+.field{width:100%;background:#1a1a1a;border:0.5px solid #2e2e2e;border-radius:8px;padding:10px 12px;color:#e8e5df;font-size:13px;margin-bottom:8px;outline:none;}
+.field:focus{border-color:#7F77DD;}
+.add-box{background:#111;border:0.5px solid #2a2a2a;border-radius:12px;padding:16px;margin-top:20px;}
+.add-box-label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;}
+.type-toggle{display:flex;gap:8px;margin-bottom:12px;}
+.type-btn{flex:1;padding:8px;border-radius:8px;border:0.5px solid #333;background:transparent;color:#666;font-size:13px;cursor:pointer;transition:all .2s;}
+.type-btn.active{background:#1e1a3a;color:#9b94e8;border-color:#3d3580;}
+.add-btn{width:100%;padding:11px;background:#7F77DD;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;}
+
+/* Notes */
+.stats-row{display:flex;gap:10px;margin-bottom:20px;}
+.stat-card{background:#161616;border:0.5px solid #2a2a2a;border-radius:10px;padding:12px;flex:1;text-align:center;}
+.stat-card-num{font-size:22px;font-weight:700;}
+.stat-card-label{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.08em;margin-top:3px;}
+.notes-area{width:100%;min-height:160px;background:#161616;border:0.5px solid #2a2a2a;border-radius:12px;padding:14px;color:#e8e5df;font-size:14px;line-height:1.7;resize:vertical;outline:none;}
+.notes-area:focus{border-color:#7F77DD;}
+.stamps-header{display:flex;align-items:center;justify-content:space-between;margin:20px 0 12px;}
+.stamps-label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.08em;}
+.stamp-btn-ui{background:#1e1a3a;color:#9b94e8;border:0.5px solid #3d3580;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-weight:500;}
+.stamp-row{display:flex;gap:10px;align-items:center;margin-bottom:8px;}
+.stamp-time{background:#1e1a3a;color:#9b94e8;border-radius:6px;padding:6px 10px;font-size:12px;font-weight:600;flex-shrink:0;font-variant-numeric:tabular-nums;}
+.stamp-input{flex:1;background:#161616;border:0.5px solid #2a2a2a;border-radius:8px;padding:7px 12px;color:#e8e5df;font-size:13px;outline:none;}
+.stamp-input:focus{border-color:#7F77DD;}
+.asked-log{margin-top:24px;}
+.asked-log-label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
+.asked-row{font-size:12px;color:#555;padding:6px 0;border-bottom:0.5px solid #1a1a1a;display:flex;gap:8px;}
+.empty-stamps{font-size:13px;color:#444;text-align:center;padding:24px 0;}
+
+/* Tweet */
+.tweet-note{font-size:12px;color:#444;line-height:1.6;background:#111;border-radius:8px;padding:10px 12px;margin-bottom:16px;}
+.quick-label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
+.quick-card{background:#161616;border:0.5px solid #2a2a2a;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .2s;}
+.quick-card:active{border-color:#7F77DD;background:#1c1a2e;}
+.quick-text{font-size:13px;color:#c8c5bf;line-height:1.55;}
+.quick-meta{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
+.quick-chars{font-size:11px;color:#555;}
+.quick-use{font-size:11px;color:#7F77DD;font-weight:600;}
+.tweet-box{background:#161616;border:0.5px solid #2a2a2a;border-radius:12px;padding:16px;margin-bottom:16px;}
+.tweet-box-label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
+.tweet-textarea{width:100%;background:#1a1a1a;border:0.5px solid #2e2e2e;border-radius:8px;padding:12px;color:#e8e5df;font-size:15px;line-height:1.6;resize:none;outline:none;min-height:110px;}
+.tweet-textarea:focus{border-color:#1DA1F2;}
+.tweet-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;}
+.char-ok{font-size:12px;color:#555;}
+.char-warn{font-size:12px;color:#D85A30;}
+.char-over{font-size:12px;color:#c0392b;font-weight:600;}
+.tweet-open-btn{padding:9px 20px;background:#000;color:#fff;border:1.5px solid #333;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;}
+.tweet-open-btn:not(:disabled):hover{background:#1a1a1a;border-color:#7F77DD;}
+.tweet-open-btn:disabled{opacity:.35;cursor:default;}
+.sent-list{margin-top:20px;}
+.sent-label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
+.sent-item{background:#0d1a0d;border:0.5px solid #1a3a1a;border-radius:10px;padding:12px 14px;margin-bottom:8px;}
+.sent-text{font-size:13px;color:#4db897;line-height:1.55;}
+.sent-time{font-size:10px;color:#2a5a2a;margin-top:6px;}
+
+/* Music tab */
+.music-hero{background:linear-gradient(135deg,#0f0f1a,#1a1430);border:0.5px solid #2a2060;border-radius:16px;padding:20px;margin-bottom:20px;text-align:center;}
+.music-hero-title{font-size:13px;color:#9b94e8;font-weight:600;margin-bottom:4px;letter-spacing:.06em;text-transform:uppercase;}
+.now-playing-name{font-size:18px;font-weight:700;color:#f0ede8;margin:10px 0 4px;min-height:26px;}
+.now-playing-sub{font-size:12px;color:#555;margin-bottom:16px;min-height:16px;}
+.player-controls{display:flex;align-items:center;justify-content:center;gap:24px;margin-bottom:16px;}
+.ctrl-btn{background:none;border:none;color:#9b94e8;font-size:28px;cursor:pointer;padding:4px;line-height:1;transition:opacity .2s;}
+.ctrl-btn:active{opacity:.6;}
+.ctrl-btn.play-pause{font-size:44px;color:#c0b8f8;}
+.ctrl-btn.disabled{color:#333;cursor:default;}
+.vol-row{display:flex;align-items:center;gap:10px;}
+.vol-icon{font-size:14px;color:#555;}
+.vol-slider{flex:1;accent-color:#7F77DD;cursor:pointer;height:4px;}
+.loop-btn{font-size:11px;padding:4px 10px;border-radius:20px;border:0.5px solid #333;background:transparent;color:#555;cursor:pointer;transition:all .2s;}
+.loop-btn.on{background:#1e1a3a;color:#9b94e8;border-color:#3d3580;}
+
+.music-section-label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
+.track-card{background:#161616;border:0.5px solid #2a2a2a;border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s;}
+.track-card.playing{background:#1c1a2e;border-color:#7F77DD;}
+.track-card:active{opacity:.7;}
+.track-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.track-info{flex:1;min-width:0;}
+.track-name{font-size:14px;font-weight:500;color:#e8e5df;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.track-src{font-size:11px;color:#555;margin-top:2px;}
+.track-play-indicator{font-size:16px;color:#7F77DD;}
+.track-remove{background:none;border:none;color:#333;cursor:pointer;font-size:18px;padding:4px;line-height:1;}
+.track-remove:active{color:#c0392b;}
+
+.add-track-box{background:#111;border:0.5px solid #2a2a2a;border-radius:12px;padding:16px;margin-top:16px;}
+.add-track-label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;}
+.source-toggle{display:flex;gap:8px;margin-bottom:12px;}
+.src-btn{flex:1;padding:8px;border-radius:8px;border:0.5px solid #333;background:transparent;color:#666;font-size:12px;cursor:pointer;transition:all .2s;}
+.src-btn.active{background:#1e1a3a;color:#9b94e8;border-color:#3d3580;}
+.file-upload-area{border:1.5px dashed #2a2a2a;border-radius:10px;padding:20px;text-align:center;margin-bottom:8px;cursor:pointer;transition:border .2s;}
+.file-upload-area:hover{border-color:#7F77DD;}
+.file-upload-label{font-size:13px;color:#555;display:block;}
+.file-upload-sub{font-size:11px;color:#333;margin-top:4px;}
+#file-input{display:none;}
+.upload-btn{width:100%;padding:11px;background:#7F77DD;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-top:4px;}
+.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.preset-card{background:#161616;border:0.5px solid #2a2a2a;border-radius:10px;padding:10px;cursor:pointer;transition:all .2s;text-align:center;}
+.preset-card:active{border-color:#7F77DD;background:#1c1a2e;}
+.preset-emoji{font-size:22px;display:block;margin-bottom:4px;}
+.preset-name{font-size:11px;color:#888;font-weight:500;}
+.preset-sub{font-size:10px;color:#444;margin-top:2px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div class="header-top">
+      <div>
+        <div class="interview-label">Live Interview</div>
+        <div class="interview-name">Professor Griff</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Asked</div>
+        <div class="stat-num" id="asked-count">0<span>/23</span></div>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('questions')">❓ Questions</button>
+      <button class="tab-btn" onclick="switchTab('music')">🎵 Music</button>
+      <button class="tab-btn" onclick="switchTab('media')">📎 Media</button>
+      <button class="tab-btn" onclick="switchTab('notes')">📝 Notes</button>
+      <button class="tab-btn" onclick="switchTab('tweet')">𝕏 Tweet</button>
+    </div>
+  </div>
+
+  <div id="content"></div>
+
+  <div id="bottombar">
+    <div id="music-mini">
+      <div class="mini-player">
+        <div style="font-size:20px">🎵</div>
+        <div class="mini-track">
+          <div class="mini-track-name" id="mini-name">No track playing</div>
+          <div class="mini-track-status" id="mini-status">Tap Music tab to load tracks</div>
+        </div>
+        <div class="mini-controls">
+          <input type="range" class="mini-vol" min="0" max="1" step="0.05" value="0.7" oninput="setVol(this.value)" title="Volume"/>
+          <button class="mini-btn" onclick="togglePlay()" id="mini-play-btn">▶</button>
+        </div>
+      </div>
+    </div>
+    <div id="nav-bar"></div>
+  </div>
+</div>
+
+<audio id="audio-player" loop></audio>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const SECTIONS = [
+  {id:"opening",label:"Opening — Early Days",color:"#7F77DD",questions:[
+    {id:1,text:"Looking back at the beginning of your career, what was the biggest lesson you learned that still guides you today?",wow:false,book:false},
+    {id:2,text:"Who was YOUR voice when you were going through it? You've spent decades being the voice for the voiceless — but who had your back?",wow:true,book:false},
+    {id:3,text:"Is there a moment where you almost quit — where you genuinely thought \"this isn't worth it anymore\"? What pulled you back?",wow:true,book:false},
+    {id:4,text:"What was your biggest fear when you stepped out on your own, and how did you overcome it?",wow:false,book:false},
+  ]},
+  {id:"after",label:"After Public Enemy",color:"#D85A30",questions:[
+    {id:5,text:"After leaving Public Enemy, what was the first project that truly felt like the start of a new chapter for you?",wow:false,book:false},
+    {id:6,text:"What's something you believed deeply early in your career that you've completely changed your mind about?",wow:true,book:false},
+    {id:7,text:"What's something you created that the world got completely wrong — where the message was totally misread?",wow:true,book:false},
+  ]},
+  {id:"books",label:"Books & Writing",color:"#0F6E56",questions:[
+    {id:8,text:"What inspired you to become an author — was there a moment where you realized music alone couldn't hold everything you needed to say?",wow:false,book:true},
+    {id:9,text:"How does writing a book differ from writing lyrics or creating music? Do they pull from the same place in you, or is it a completely different process?",wow:false,book:true},
+    {id:10,text:"Are there stories, truths, or themes you can explore in your books that you simply can't fully express through music? What does the page give you that the mic doesn't?",wow:false,book:true},
+    {id:11,text:"Has there ever been a time where your own message challenged YOU personally — where you had to live up to what you wrote or what you preached?",wow:true,book:true},
+  ]},
+  {id:"creativity",label:"Creativity & Risk",color:"#185FA5",questions:[
+    {id:12,text:"When you're creating, what does your process look like? Are you more spontaneous or highly structured?",wow:false,book:false},
+    {id:13,text:"Is there a creative risk you took that seemed scary at the time but ended up paying off in ways you didn't expect?",wow:false,book:false},
+    {id:14,text:"What's the one song, piece of work, or chapter you almost didn't release — and what made you put it out anyway?",wow:true,book:false},
+  ]},
+  {id:"community",label:"Community & Mentorship",color:"#854F0B",questions:[
+    {id:15,text:"How has your view of family and community evolved throughout your career?",wow:false,book:false},
+    {id:16,text:"What role has mentorship played in your journey — both receiving it and giving it?",wow:false,book:false},
+    {id:17,text:"What's the most ordinary, mundane thing about your daily life that would completely surprise people?",wow:true,book:false},
+  ]},
+  {id:"tech",label:"Technology & AI",color:"#3B6D11",questions:[
+    {id:18,text:"Technology has changed music dramatically over the decades. How do you view AI's place in the creative process compared to innovations like synthesizers, sampling, or music videos?",wow:false,book:false},
+    {id:19,text:"What advice would you give artists who are trying to balance technology with authenticity?",wow:false,book:false},
+  ]},
+  {id:"legacy",label:"Success & Legacy",color:"#993556",questions:[
+    {id:20,text:"Has your definition of success changed over the years? What does success mean to you now?",wow:false,book:false},
+    {id:21,text:"What legacy do you hope your work — your music, your books, your teachings — leaves for future generations?",wow:false,book:true},
+    {id:22,text:"Is there something you've never said publicly that you've always wanted to say — and would you say it right now?",wow:true,book:false},
+    {id:23,text:"If you could sit down with your younger self for five minutes, what would you tell him?",wow:false,book:false},
+  ]},
+];
+const ALL_Q = SECTIONS.flatMap(s=>s.questions.map(q=>({...q,sectionId:s.id,sectionLabel:s.label,sectionColor:s.color})));
+
+const QUICK_TWEETS = [
+  "🎙 Live right now with Professor Griff — the conversation you didn't know you needed. Tune in!",
+  "Professor Griff just said something that stopped me cold 😶 Stay locked in.",
+  "The wisdom in this room right now is unreal. Professor Griff is NOT holding back today. 🔥",
+  "If you've ever been misunderstood by the world, this interview with Professor Griff is FOR YOU.",
+  "Professor Griff on legacy, truth & what he's never said publicly — this is one for the books. 📖",
+  "We're going DEEP today. Professor Griff + Mindy = a conversation the culture needs right now. 🙏",
+];
+
+const PRESET_VIBES = [
+  {id:'lofi',name:'Lo-Fi Focus',emoji:'🌙',sub:'Chill beats',url:'https://www.youtube.com/watch?v=jfKfPfyJRdk'},
+  {id:'jazz',name:'Jazz Café',emoji:'🎷',sub:'Smooth & warm',url:'https://www.youtube.com/watch?v=neV3EPgvZ3g'},
+  {id:'soul',name:'Neo Soul',emoji:'✨',sub:'Soulful vibes',url:'https://www.youtube.com/watch?v=TboBHDHIqBw'},
+  {id:'afro',name:'Afrobeats',emoji:'🥁',sub:'High energy',url:'https://www.youtube.com/watch?v=J2aFEzWjNMk'},
+  {id:'gospel',name:'Gospel Vibes',emoji:'🙏',sub:'Uplifting',url:'https://www.youtube.com/watch?v=6NmXhVy_NNE'},
+  {id:'ambient',name:'Ambient Space',emoji:'🌌',sub:'Atmospheric',url:'https://www.youtube.com/watch?v=1ZYbU82GVz4'},
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+const S = {
+  tab:'questions', asked:new Set(), active:null, filter:'all',
+  media:[
+    {id:1,type:'video',label:'Public Enemy doc clip',url:'',note:'Play before segment 2'},
+    {id:2,type:'audio',label:'Pre-interview soundbite',url:'',note:'Opening energy'},
+  ],
+  newMedia:{type:'audio',label:'',url:'',note:''},
+  notes:'', stamps:[], startTime:Date.now(),
+  tweetDraft:'', sentTweets:[],
+  tracks:[], currentTrackIdx:-1, playing:false, volume:0.7, loop:true,
+  musicSource:'file', addTrackName:'', addTrackUrl:'',
+};
+
+// ── AUDIO ─────────────────────────────────────────────────────────────────────
+const audio = document.getElementById('audio-player');
+audio.volume = S.volume;
+audio.loop = S.loop;
+audio.addEventListener('ended',()=>{ if(!S.loop) nextTrack(); });
+audio.addEventListener('play',()=>{ S.playing=true; updateMiniPlayer(); });
+audio.addEventListener('pause',()=>{ S.playing=false; updateMiniPlayer(); });
+
+function loadTrack(idx){
+  if(idx<0||idx>=S.tracks.length)return;
+  S.currentTrackIdx=idx;
+  const t=S.tracks[idx];
+  if(t.blobUrl){ audio.src=t.blobUrl; }
+  else if(t.url){ audio.src=t.url; }
+  audio.play().catch(()=>{});
+  updateMiniPlayer();
+  if(S.tab==='music') render();
+}
+
+function togglePlay(){
+  if(S.currentTrackIdx<0&&S.tracks.length>0){ loadTrack(0); return; }
+  if(audio.paused) audio.play().catch(()=>{});
+  else audio.pause();
+}
+
+function nextTrack(){
+  if(!S.tracks.length)return;
+  loadTrack((S.currentTrackIdx+1)%S.tracks.length);
+}
+function prevTrack(){
+  if(!S.tracks.length)return;
+  loadTrack((S.currentTrackIdx-1+S.tracks.length)%S.tracks.length);
+}
+function setVol(v){ S.volume=parseFloat(v); audio.volume=S.volume; }
+function toggleLoop(){ S.loop=!S.loop; audio.loop=S.loop; render(); }
+
+function updateMiniPlayer(){
+  const mini=document.getElementById('music-mini');
+  const nameEl=document.getElementById('mini-name');
+  const statusEl=document.getElementById('mini-status');
+  const playBtn=document.getElementById('mini-play-btn');
+  if(S.tracks.length>0){
+    mini.classList.add('visible');
+    const t=S.currentTrackIdx>=0?S.tracks[S.currentTrackIdx]:null;
+    nameEl.textContent=t?t.name:'No track selected';
+    statusEl.textContent=S.playing?'▶ Playing':'⏸ Paused';
+    if(playBtn) playBtn.textContent=S.playing?'⏸':'▶';
+  } else {
+    mini.classList.remove('visible');
+  }
+}
+
+function addFileTrack(file){
+  const blobUrl=URL.createObjectURL(file);
+  S.tracks.push({id:Date.now(),name:file.name.replace(/\.[^.]+$/,''),blobUrl,url:'',source:'file'});
+  updateMiniPlayer();
+  if(S.tab==='music') render();
+}
+
+function addUrlTrack(){
+  const name=S.addTrackName||S.addTrackUrl||'Track '+(S.tracks.length+1);
+  S.tracks.push({id:Date.now()+1,name,url:S.addTrackUrl,blobUrl:null,source:'url'});
+  S.addTrackName='';S.addTrackUrl='';
+  updateMiniPlayer();
+  render();
+}
+
+function addPreset(p){
+  S.tracks.push({id:Date.now()+2,name:p.name+' '+p.emoji,url:p.url,blobUrl:null,source:'preset'});
+  updateMiniPlayer();
+  render();
+}
+
+function removeTrack(id){
+  const idx=S.tracks.findIndex(t=>t.id===id);
+  if(idx===S.currentTrackIdx){ audio.pause(); audio.src=''; S.currentTrackIdx=-1; S.playing=false; }
+  else if(idx<S.currentTrackIdx){ S.currentTrackIdx--; }
+  S.tracks=S.tracks.filter(t=>t.id!==id);
+  updateMiniPlayer();
+  render();
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function elapsed(){
+  const s=Math.floor((Date.now()-S.startTime)/1000);
+  return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+}
+
+function switchTab(t){
+  S.tab=t; S.active=null;
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active',['questions','music','media','notes','tweet'][i]===t);
+  });
+  render();
+}
+
+function markAsked(id){ S.asked.add(id); if(S.active===id)S.active=null; updateHeader(); render(); }
+function unmark(id){ S.asked.delete(id); updateHeader(); render(); }
+function setActive(id){ S.active=(S.active===id?null:id); render(); }
+function setFilter(f){ S.filter=f; render(); }
+
+function updateHeader(){
+  const n=S.asked.size;
+  document.getElementById('asked-count').innerHTML=n+'<span>/23</span>';
+  document.getElementById('progress-fill').style.width=Math.round(n/23*100)+'%';
+}
+
+// Touch swipe
+let _tx=null,_tid=null,_sd=null;
+function _ts(e,id){_tx=e.touches[0].clientX;_tid=id;_sd=null;}
+function _tm(e){if(_tx===null)return;const d=e.touches[0].clientX-_tx;if(Math.abs(d)>28)_sd=d>0?'r':'l';}
+function _te(id){if(_sd==='l')markAsked(id);else if(_sd==='r')unmark(id);_tx=null;_tid=null;_sd=null;}
+
+function openTweetURL(text){
+  window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(text),'_blank');
+  S.sentTweets.unshift({text,time:new Date().toLocaleTimeString()});
+  S.tweetDraft=''; render();
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render(){
+  const c=document.getElementById('content');
+  const nb=document.getElementById('nav-bar');
+
+  // ── QUESTIONS ──
+  if(S.tab==='questions'){
+    const fq=ALL_Q.filter(q=>{
+      if(S.filter==='asked') return S.asked.has(q.id);
+      if(S.filter==='remaining') return !S.asked.has(q.id);
+      if(S.filter==='wow') return q.wow;
+      if(S.filter==='book') return q.book;
+      return true;
+    });
+    let h=`<div class="filters">`+
+      [['all','All'],['remaining','Remaining'],['asked','Asked'],['wow','⚡ Wow'],['book','📖 Book']]
+      .map(([v,l])=>`<button class="chip${S.filter===v?' active':''}" onclick="setFilter('${v}')">${l}</button>`).join('')+
+      `</div><div class="swipe-hint-text">Tap to expand · Swipe left = asked · Swipe right = undo</div>`;
+
+    SECTIONS.forEach(sec=>{
+      const qs=fq.filter(q=>q.sectionId===sec.id);
+      if(!qs.length)return;
+      h+=`<div class="section-gap"><div class="section-label" style="color:${sec.color}">${sec.label}</div>`;
+      qs.forEach(q=>{
+        const done=S.asked.has(q.id), act=S.active===q.id&&!done;
+        h+=`<div class="q-card${done?' done':''}${act?' active':''}${q.wow&&!done?' wow-card':''}"
+          style="${q.wow&&!done?`border-left-color:${sec.color};`:''}"
+          ontouchstart="_ts(event,${q.id})" ontouchmove="_tm(event)" ontouchend="_te(${q.id})"
+          onclick="${done?'':`setActive(${q.id})`}">
+          <div class="q-row">
+            <div class="q-num">Q${q.id}</div>
+            <div class="q-text">${q.text}</div>
+            <button class="check-btn${done?' done':''}" onclick="event.stopPropagation();${done?`unmark(${q.id})`:`markAsked(${q.id})`}">${done?'✓':'○'}</button>
+          </div>
+          ${!done&&(q.wow||q.book)?`<div class="badges">${q.wow?'<span class="badge badge-wow">⚡ Wow</span>':''}${q.book?'<span class="badge badge-book">📖 Book</span>':''}</div>`:''
+          }${act?`<div class="expand-area">
+            <div class="expand-tip-label">Follow-up angle</div>
+            <div class="expand-tip">${q.wow?'Hold the silence after this one. Don\'t jump in — let him sit in it. That\'s where the real answer lives.':'Listen for a specific name or moment. If he goes there, ask him to go deeper before moving on.'}</div>
+            <button class="mark-btn" onclick="event.stopPropagation();markAsked(${q.id})">Mark Asked & Move On →</button>
+          </div>`:''}
+        </div>`;
+      });
+      h+='</div>';
+    });
+    c.innerHTML=h;
+
+    const next=ALL_Q.find(q=>!S.asked.has(q.id));
+    nb.innerHTML=next
+      ?`<div class="next-label">Up Next — Q${next.id}</div>
+         <div class="next-text">${next.text}</div>
+         <button class="jump-btn" onclick="setFilter('all');setActive(${next.id})">Jump to This Question →</button>`
+      :`<div class="complete-msg"><div class="complete-title">🎉 Interview Complete!</div><div class="complete-sub">All 23 questions asked</div></div>`;
+  }
+
+  // ── MUSIC ──
+  else if(S.tab==='music'){
+    const ct=S.currentTrackIdx>=0?S.tracks[S.currentTrackIdx]:null;
+    let h=`<div class="music-hero">
+      <div class="music-hero-title">🎵 Background Music</div>
+      <div class="now-playing-name">${ct?ct.name:'Nothing playing yet'}</div>
+      <div class="now-playing-sub">${ct?(S.playing?'Now playing':'Paused'):'Add a track below to get started'}</div>
+      <div class="player-controls">
+        <button class="ctrl-btn${S.tracks.length<2?' disabled':''}" onclick="prevTrack()">⏮</button>
+        <button class="ctrl-btn play-pause" onclick="togglePlay()">${S.playing?'⏸':'▶'}</button>
+        <button class="ctrl-btn${S.tracks.length<2?' disabled':''}" onclick="nextTrack()">⏭</button>
+      </div>
+      <div class="vol-row">
+        <span class="vol-icon">🔈</span>
+        <input type="range" class="vol-slider" min="0" max="1" step="0.05" value="${S.volume}" oninput="setVol(this.value)"/>
+        <span class="vol-icon">🔊</span>
+        <button class="loop-btn${S.loop?' on':''}" onclick="toggleLoop()">${S.loop?'🔁 Loop On':'↩ Loop Off'}</button>
+      </div>
+    </div>`;
+
+    if(S.tracks.length){
+      h+=`<div class="music-section-label">Your Playlist (${S.tracks.length})</div>`;
+      S.tracks.forEach((t,i)=>{
+        const isPlaying=i===S.currentTrackIdx&&S.playing;
+        h+=`<div class="track-card${i===S.currentTrackIdx?' playing':''}" onclick="loadTrack(${i})">
+          <div class="track-icon" style="background:${i===S.currentTrackIdx?'#1e1a3a':'#1a1a1a'}">${isPlaying?'🔊':'🎵'}</div>
+          <div class="track-info">
+            <div class="track-name">${t.name}</div>
+            <div class="track-src">${t.source==='file'?'📂 Local file':t.source==='preset'?'⭐ Preset vibe':'🔗 URL link'}</div>
+          </div>
+          ${isPlaying?'<div class="track-play-indicator">▶</div>':''}
+          <button class="track-remove" onclick="event.stopPropagation();removeTrack(${t.id})">×</button>
+        </div>`;
+      });
+    }
+
+    // Add track box
+    h+=`<div class="add-track-box">
+      <div class="add-track-label">Add Music</div>
+      <div class="source-toggle">
+        <button class="src-btn${S.musicSource==='file'?' active':''}" onclick="S.musicSource='file';render()">📂 My Files</button>
+        <button class="src-btn${S.musicSource==='url'?' active':''}" onclick="S.musicSource='url';render()">🔗 URL</button>
+        <button class="src-btn${S.musicSource==='preset'?' active':''}" onclick="S.musicSource='preset';render()">⭐ Vibes</button>
+      </div>`;
+
+    if(S.musicSource==='file'){
+      h+=`<div class="file-upload-area" onclick="document.getElementById('file-input').click()">
+        <span class="file-upload-label">Tap to upload audio files</span>
+        <span class="file-upload-sub">MP3 · WAV · M4A · AAC · OGG</span>
+      </div>
+      <input type="file" id="file-input" accept="audio/*" multiple onchange="Array.from(this.files).forEach(f=>addFileTrack(f))"/>
+      <button class="upload-btn" onclick="document.getElementById('file-input').click()">Choose Audio Files</button>`;
+    } else if(S.musicSource==='url'){
+      h+=`<input class="field" placeholder="Track name" value="${S.addTrackName}" oninput="S.addTrackName=this.value"/>
+      <input class="field" placeholder="Direct audio URL (.mp3, .m4a, SoundCloud, etc.)" value="${S.addTrackUrl}" oninput="S.addTrackUrl=this.value"/>
+      <div style="font-size:11px;color:#444;margin-bottom:10px;line-height:1.6;">Paste a direct audio file URL. For YouTube, download the MP3 first or use a SoundCloud/direct link.</div>
+      <button class="upload-btn" onclick="addUrlTrack()">Add to Playlist</button>`;
+    } else {
+      h+=`<div style="font-size:12px;color:#444;margin-bottom:12px;line-height:1.6;">These open YouTube links in a new tab for reference — for in-app playback, upload your own MP3s.</div>
+      <div class="preset-grid">
+        ${PRESET_VIBES.map(p=>`<div class="preset-card" onclick="addPreset(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+          <span class="preset-emoji">${p.emoji}</span>
+          <div class="preset-name">${p.name}</div>
+          <div class="preset-sub">${p.sub}</div>
+        </div>`).join('')}
+      </div>`;
+    }
+    h+=`</div>`;
+    c.innerHTML=h;
+    nb.innerHTML='';
+  }
+
+  // ── MEDIA ──
+  else if(S.tab==='media'){
+    let h=`<div style="font-size:12px;color:#444;margin-bottom:18px;line-height:1.65;">Reference clips and links to open during the live interview.</div>`;
+    S.media.forEach(m=>{
+      const icon=m.type==='audio'?'🎙':'🎬';
+      const ibg=m.type==='audio'?'#1a1429':'#0d1f2d';
+      const ic=m.type==='audio'?'#9b94e8':'#4d9fd4';
+      h+=`<div class="media-card">
+        <div class="media-header">
+          <div class="media-icon" style="background:${ibg};color:${ic}">${icon}</div>
+          <div class="media-meta"><div class="media-title">${m.label}</div>${m.note?`<div class="media-note">${m.note}</div>`:''}</div>
+          <button class="remove-btn" onclick="S.media=S.media.filter(x=>x.id!==${m.id});render()">×</button>
+        </div>
+        ${m.url?`<a class="media-link" href="${m.url}" target="_blank">▶ ${m.url}</a>`:`<div style="font-size:12px;color:#333;padding:4px 0;">No URL yet</div>`}
+      </div>`;
+    });
+    const nm=S.newMedia;
+    h+=`<div class="add-box">
+      <div class="add-box-label">Add Clip or Link</div>
+      <div class="type-toggle">
+        <button class="type-btn${nm.type==='audio'?' active':''}" onclick="S.newMedia.type='audio';render()">🎙 Audio</button>
+        <button class="type-btn${nm.type==='video'?' active':''}" onclick="S.newMedia.type='video';render()">🎬 Video</button>
+      </div>
+      <input class="field" placeholder="Label" value="${nm.label}" oninput="S.newMedia.label=this.value"/>
+      <input class="field" placeholder="URL (optional)" value="${nm.url}" oninput="S.newMedia.url=this.value"/>
+      <input class="field" placeholder="Cue note (e.g. Play before segment 2)" value="${nm.note}" oninput="S.newMedia.note=this.value"/>
+      <button class="add-btn" onclick="if(S.newMedia.label){S.media.push({...S.newMedia,id:Date.now()});S.newMedia={type:'audio',label:'',url:'',note:''};render();}">Add to Library</button>
+    </div>`;
+    c.innerHTML=h; nb.innerHTML='';
+  }
+
+  // ── NOTES ──
+  else if(S.tab==='notes'){
+    let h=`<div class="stats-row">
+      <div class="stat-card"><div class="stat-card-num" style="color:#7F77DD">${S.asked.size}</div><div class="stat-card-label">Asked</div></div>
+      <div class="stat-card"><div class="stat-card-num" style="color:#D85A30">${23-S.asked.size}</div><div class="stat-card-label">Left</div></div>
+      <div class="stat-card"><div class="stat-card-num" style="color:#4db897">${S.stamps.length}</div><div class="stat-card-label">Stamps</div></div>
+    </div>
+    <div style="font-size:11px;color:#444;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Live Notes</div>
+    <textarea class="notes-area" placeholder="Type as you go — reactions, quotes, follow-up ideas, vibes..." oninput="S.notes=this.value">${S.notes}</textarea>
+    <div class="stamps-header">
+      <div class="stamps-label">Timestamped Moments</div>
+      <button class="stamp-btn-ui" onclick="S.stamps.push({time:elapsed(),note:''});render()">+ Stamp Now</button>
+    </div>`;
+    if(!S.stamps.length){
+      h+=`<div class="empty-stamps">Hit "Stamp Now" to pin a golden moment</div>`;
+    } else {
+      S.stamps.forEach((s,i)=>{
+        h+=`<div class="stamp-row">
+          <div class="stamp-time">${s.time}</div>
+          <input class="stamp-input" value="${s.note}" placeholder="What just happened?" oninput="S.stamps[${i}].note=this.value"/>
+        </div>`;
+      });
+    }
+    if(S.asked.size){
+      h+=`<div class="asked-log"><div class="asked-log-label">Questions Asked</div>`;
+      ALL_Q.filter(q=>S.asked.has(q.id)).forEach(q=>{
+        h+=`<div class="asked-row"><span style="color:#333;flex-shrink:0">Q${q.id}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${q.text}</span></div>`;
+      });
+      h+='</div>';
+    }
+    c.innerHTML=h; nb.innerHTML='';
+  }
+
+  // ── TWEET ──
+  else if(S.tab==='tweet'){
+    const d=S.tweetDraft, len=d.length;
+    const cc=len>280?'char-over':len>260?'char-warn':'char-ok';
+    let h=`<div class="tweet-note">💡 Tap a quick tweet to load it, edit if you want, then hit <strong>Open in X</strong> — Twitter opens with your text pre-filled, one tap to post.</div>
+    <div class="quick-label">Quick Fire Tweets</div>`;
+    QUICK_TWEETS.forEach((t,i)=>{
+      h+=`<div class="quick-card" onclick="S.tweetDraft=${JSON.stringify(t)};render()">
+        <div class="quick-text">${t}</div>
+        <div class="quick-meta"><span class="quick-chars">${t.length} chars</span><span class="quick-use">Use this →</span></div>
+      </div>`;
+    });
+    h+=`<div class="tweet-box" style="margin-top:20px">
+      <div class="tweet-box-label">Your Tweet</div>
+      <textarea class="tweet-textarea" placeholder="What's happening at this interview..." oninput="S.tweetDraft=this.value;render()">${d}</textarea>
+      <div class="tweet-footer">
+        <span class="${cc}">${len}/280</span>
+        <button class="tweet-open-btn" ${len===0||len>280?'disabled':''} onclick="openTweetURL(S.tweetDraft)">𝕏 Open in X</button>
+      </div>
+    </div>`;
+    if(S.sentTweets.length){
+      h+=`<div class="sent-list"><div class="sent-label">Sent This Session</div>`;
+      S.sentTweets.forEach(t=>{
+        h+=`<div class="sent-item"><div class="sent-text">${t.text}</div><div class="sent-time">Opened at ${t.time}</div></div>`;
+      });
+      h+='</div>';
+    }
+    c.innerHTML=h; nb.innerHTML='';
+  }
+}
+
+render();
+</script>
+</body>
+</html>
