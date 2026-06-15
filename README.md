@@ -1,4 +1,4 @@
-# 🎙 Mindy's Interview & Show Command Center
+# 🎙 XOCO Interview & Show Command Center
 
 A suite of two fully offline, single-file browser apps built for **live show production on one device** — no internet required, no app store, no installs. Open in Safari or Chrome and go.
 
